@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/sainak/status-checker/cmd"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	// entrypoint
+	cmd.Execute()
 }
