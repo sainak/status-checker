@@ -8,6 +8,8 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/sainak/status-checker/core/config"
 	"github.com/sainak/status-checker/core/logger"
+	"github.com/sainak/status-checker/helpers"
+	_rootRouter "github.com/sainak/status-checker/root/interface/http/router"
 	"net/http"
 )
 
@@ -34,8 +36,10 @@ func Run() {
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	r.Use(middleware.NoCache)
 
-	r.Mount("/debug", middleware.Profiler())
+	//r.Mount("/debug", middleware.Profiler())
+	_rootRouter.RegisterRoutes(r)
 
+	logger.Print(helpers.GetRegisteredRoutes(r))
 	server := &http.Server{
 		Addr:    "localhost" + config.GetServerAddress(),
 		Handler: r,
