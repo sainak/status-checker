@@ -10,7 +10,12 @@ import (
 	"github.com/sainak/status-checker/core/logger"
 	"github.com/sainak/status-checker/helpers"
 	_rootRouter "github.com/sainak/status-checker/root/interface/http/router"
+	"github.com/sainak/status-checker/websitestatus/interface/cron"
+	_websiteStatusRouter "github.com/sainak/status-checker/websitestatus/interface/http/router"
+	_websiteStatusRepo "github.com/sainak/status-checker/websitestatus/repo/sqlite"
+	_websiteStatusService "github.com/sainak/status-checker/websitestatus/service"
 	"net/http"
+	"time"
 )
 
 func Run() {
@@ -38,6 +43,12 @@ func Run() {
 
 	//r.Mount("/debug", middleware.Profiler())
 	_rootRouter.RegisterRoutes(r)
+
+	websiteStatusRepo := _websiteStatusRepo.NewWebsiteStatusRepo(db)
+	websiteStatusService := _websiteStatusService.NewWebsiteStatusService(websiteStatusRepo, 30*time.Second)
+	_websiteStatusRouter.RegisterRoutes(r, websiteStatusService)
+
+	go cron.RunChecker(websiteStatusRepo)
 
 	logger.Print(helpers.GetRegisteredRoutes(r))
 	server := &http.Server{
