@@ -14,7 +14,7 @@ const (
 	SleepDuration = 30 * time.Second
 )
 
-func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusRepo, broker <-chan domain.Website) {
+func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusStorer, broker <-chan domain.Website) {
 	logger.Info("spawning workers")
 	checker := _websiteStatusService.HttpChecker{Repo: repo}
 
@@ -36,7 +36,7 @@ func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusRepo, broker <-c
 	}
 }
 
-func RunChecker(repo domain.WebsiteStatusRepo) {
+func RunChecker(repo domain.WebsiteStatusStorer) {
 	logger.Info("starting checker cron job")
 	broker := make(chan domain.Website, NumWorkers)
 	defer close(broker)

@@ -10,7 +10,7 @@ import (
 	"github.com/sainak/status-checker/helpers/repo"
 )
 
-func NewWebsiteStatusRepo(db *sqlx.DB) domain.WebsiteStatusRepo {
+func NewWebsiteStatusRepo(db *sqlx.DB) domain.WebsiteStatusStorer {
 	return &pgWebsiteStatusRepo{db}
 }
 

@@ -24,7 +24,7 @@ type WebsiteStatus struct {
 	WebsiteID int64     `json:"website_id"`
 }
 
-type WebsiteStatusRepo interface {
+type WebsiteStatusStorer interface {
 	FetchWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]Website, string, error)
 	InsertWebsite(ctx context.Context, website *Website) error
 	FetchWebsiteByID(ctx context.Context, id int64) (Website, error)

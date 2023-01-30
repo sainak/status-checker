@@ -11,7 +11,7 @@ import (
 
 type HttpChecker struct {
 	http.Client
-	Repo domain.WebsiteStatusRepo
+	Repo domain.WebsiteStatusStorer
 }
 
 func (h *HttpChecker) Check(ctx context.Context, name string) (status bool, err error) {

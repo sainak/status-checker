@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-func NewWebsiteStatusService(repo domain.WebsiteStatusRepo, timeout time.Duration) domain.WebsiteStatusService {
+func NewWebsiteStatusService(repo domain.WebsiteStatusStorer, timeout time.Duration) domain.WebsiteStatusService {
 	return &websiteStatusService{repo, timeout}
 }
 
 type websiteStatusService struct {
-	repo           domain.WebsiteStatusRepo
+	repo           domain.WebsiteStatusStorer
 	contextTimeout time.Duration
 }
 
