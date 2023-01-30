@@ -24,8 +24,24 @@ Build the app
 go build
 ```
 
+Start postgres
+```shell
+docker run -d --name postgres1 \
+    -v postgres_data:/var/lib/postgresql/data \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=postgres \
+    -e POSTGRES_DB=website-status \
+    -p 5432:5432 \
+    postgres:latest
+```
+
+Migrate db
+```shell
+./status-checker migrate up
+```
+
 Start the server
 
 ```shell
-./status-checker
+./status-checker serve
 ```
