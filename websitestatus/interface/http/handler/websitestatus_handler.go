@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/go-chi/render"
 	"github.com/sainak/status-checker/core/domain"
-	errors2 "github.com/sainak/status-checker/core/errors"
+	errors2 "github.com/sainak/status-checker/core/myerrors"
 	"gopkg.in/guregu/null.v4/zero"
 	"net/http"
 	"strconv"

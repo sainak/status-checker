@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"github.com/sainak/status-checker/core/domain"
-	"github.com/sainak/status-checker/core/errors"
 	"github.com/sainak/status-checker/core/logger"
+	"github.com/sainak/status-checker/core/myerrors"
 	"github.com/sainak/status-checker/helpers/repo"
 )
 
@@ -31,7 +31,7 @@ func (s pgWebsiteStatusRepo) QueryWebsites(
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil {
 		logger.Error(err)
-		err = errors.ErrBadParamInput
+		err = myerrors.ErrBadParamInput
 		return
 	}
 	stmt, err := s.DB.PrepareContext(ctx, query)
@@ -84,7 +84,7 @@ func (s pgWebsiteStatusRepo) QueryWebsitesStatus(
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil {
 		logger.Error(err)
-		err = errors.ErrBadParamInput
+		err = myerrors.ErrBadParamInput
 		return
 	}
 	stmt, err := s.DB.PreparexContext(ctx, query)
@@ -134,11 +134,6 @@ func (s pgWebsiteStatusRepo) InsertWebsite(
 	}
 	err = stmt.QueryRowxContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
 	if err != nil {
-		// check if the error is a duplicate key error
-		//if _errors.Is(err, sql.) {
-		//if err.Error() == "UNIQUE constraint failed: websites.url" {
-		//	err = errors.ErrConflict
-		//}
 		panic(err)
 		return
 	}
@@ -217,7 +212,7 @@ func (s pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 		WHERE website_id = $1 AND checked_at > $2 ORDER BY checked_at LIMIT $3`
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil && cursor != "" {
-		err = errors.ErrBadParamInput
+		err = myerrors.ErrBadParamInput
 		return
 	}
 	stmt, err := s.DB.PrepareContext(ctx, query)
