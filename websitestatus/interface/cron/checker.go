@@ -16,7 +16,7 @@ const (
 
 func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusStorer, broker <-chan domain.Website) {
 	logger.Info("spawning workers")
-	checker := _websiteStatusService.HttpChecker{Repo: repo}
+	checker := _websiteStatusService.NewHttpChecker(repo)
 
 	for i := 0; i < NumWorkers; i++ {
 		go func(id int) {
@@ -29,7 +29,7 @@ func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusStorer, broker <
 					if !more {
 						return
 					}
-					_websiteStatusService.CheckWebsiteStatus(ctx, &checker, website)
+					_websiteStatusService.CheckWebsiteStatus(ctx, checker, website)
 				}
 			}
 		}(i)

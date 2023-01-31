@@ -10,12 +10,19 @@ import (
 	"time"
 )
 
-type HttpChecker struct {
+type httpChecker struct {
 	http.Client
-	Repo domain.WebsiteStatusStorer
+	repo domain.WebsiteStatusStorer
 }
 
-func (h *HttpChecker) Check(ctx context.Context, name string) (status bool, err error) {
+func NewHttpChecker(r domain.WebsiteStatusStorer) domain.StatusChecker {
+	return &httpChecker{
+		repo: r,
+	}
+
+}
+
+func (h *httpChecker) Check(ctx context.Context, name string) (status bool, err error) {
 	logger.Info("checking website: ", name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+name, nil)
 	if err != nil {
@@ -42,8 +49,8 @@ func (h *HttpChecker) Check(ctx context.Context, name string) (status bool, err 
 	return
 }
 
-func (h *HttpChecker) CreateStatus(ctx context.Context, status *domain.Status) error {
-	return h.Repo.InsertStatus(ctx, status)
+func (h *httpChecker) CreateStatus(ctx context.Context, status *domain.Status) error {
+	return h.repo.InsertStatus(ctx, status)
 }
 
 func CheckWebsiteStatus(ctx context.Context, checker domain.StatusChecker, website domain.Website) {
