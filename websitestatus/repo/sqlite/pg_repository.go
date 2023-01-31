@@ -18,7 +18,7 @@ type pgWebsiteStatusRepo struct {
 	DB *sqlx.DB
 }
 
-func (s pgWebsiteStatusRepo) FetchWebsites(
+func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
 	ctx context.Context,
 	cursor string,
 	num int64,
@@ -98,7 +98,7 @@ func (s pgWebsiteStatusRepo) InsertWebsite(
 	return err
 }
 
-func (s pgWebsiteStatusRepo) FetchWebsiteByID(
+func (s pgWebsiteStatusRepo) QueryWebsiteWithStatusByID(
 	ctx context.Context,
 	id int64,
 ) (website domain.Website, err error) {
@@ -162,7 +162,7 @@ func (s pgWebsiteStatusRepo) InsertWebsiteStatus(
 	return
 }
 
-func (s pgWebsiteStatusRepo) FetchWebsiteStatuses(
+func (s pgWebsiteStatusRepo) QueryStatusesForWebsite(
 	ctx context.Context,
 	websiteID int64,
 	cursor string,

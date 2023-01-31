@@ -25,13 +25,13 @@ type WebsiteStatus struct {
 }
 
 type WebsiteStatusStorer interface {
-	FetchWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]Website, string, error)
+	QueryWebsitesWithStatus(ctx context.Context, cursor string, num int64, filters map[string]string) ([]Website, string, error)
 	InsertWebsite(ctx context.Context, website *Website) error
-	FetchWebsiteByID(ctx context.Context, id int64) (Website, error)
+	QueryWebsiteWithStatusByID(ctx context.Context, id int64) (Website, error)
 	UpdateIntoWebsite(ctx context.Context, id int64, website *Website) error
 	DropWebsite(ctx context.Context, id int64) error
 	InsertWebsiteStatus(ctx context.Context, status *WebsiteStatus) error
-	FetchWebsiteStatuses(ctx context.Context, websiteID int64, cursor string, num int64) ([]WebsiteStatus, string, error)
+	QueryStatusesForWebsite(ctx context.Context, websiteID int64, cursor string, num int64) ([]WebsiteStatus, string, error)
 }
 
 type WebsiteStatusService interface {

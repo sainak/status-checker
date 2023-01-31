@@ -19,7 +19,7 @@ func (w websiteStatusService) ListWebsites(ctx context.Context, cursor string, n
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.FetchWebsites(ctx, cursor, num, filters)
+	return w.repo.QueryWebsitesWithStatus(ctx, cursor, num, filters)
 }
 
 func (w websiteStatusService) CreateWebsite(ctx context.Context, website *domain.Website) error {
@@ -33,7 +33,7 @@ func (w websiteStatusService) GetWebsiteByID(ctx context.Context, id int64) (res
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.FetchWebsiteByID(ctx, id)
+	return w.repo.QueryWebsiteWithStatusByID(ctx, id)
 }
 
 func (w websiteStatusService) UpdateWebsite(ctx context.Context, id int64, website *domain.Website) error {
@@ -61,5 +61,5 @@ func (w websiteStatusService) ListWebsiteStatuses(ctx context.Context, websiteID
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.FetchWebsiteStatuses(ctx, websiteID, cursor, num)
+	return w.repo.QueryStatusesForWebsite(ctx, websiteID, cursor, num)
 }
