@@ -15,11 +15,11 @@ type websiteStatusService struct {
 	contextTimeout time.Duration
 }
 
-func (w websiteStatusService) ListWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]domain.Website, string, error) {
+func (w websiteStatusService) ListWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]domain.WebsiteStatus, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.QueryWebsitesWithStatus(ctx, cursor, num, filters)
+	return w.repo.QueryWebsitesStatus(ctx, cursor, num, filters)
 }
 
 func (w websiteStatusService) CreateWebsite(ctx context.Context, website *domain.Website) error {
@@ -29,11 +29,11 @@ func (w websiteStatusService) CreateWebsite(ctx context.Context, website *domain
 	return w.repo.InsertWebsite(ctx, website)
 }
 
-func (w websiteStatusService) GetWebsiteByID(ctx context.Context, id int64) (res domain.Website, err error) {
+func (w websiteStatusService) GetWebsiteByID(ctx context.Context, id int64) (res domain.WebsiteStatus, err error) {
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.QueryWebsiteWithStatusByID(ctx, id)
+	return w.repo.QueryWebsiteStatusByID(ctx, id)
 }
 
 func (w websiteStatusService) UpdateWebsite(ctx context.Context, id int64, website *domain.Website) error {
@@ -50,16 +50,16 @@ func (w websiteStatusService) DeleteWebsite(ctx context.Context, id int64) error
 	return w.repo.DropWebsite(ctx, id)
 }
 
-func (w websiteStatusService) CreateWebsiteStatus(ctx context.Context, status *domain.WebsiteStatus) error {
+func (w websiteStatusService) CreateWebsiteStatus(ctx context.Context, status *domain.Status) error {
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.InsertWebsiteStatus(ctx, status)
+	return w.repo.InsertStatus(ctx, status)
 }
 
-func (w websiteStatusService) ListWebsiteStatuses(ctx context.Context, websiteID int64, cursor string, num int64) ([]domain.WebsiteStatus, string, error) {
+func (w websiteStatusService) ListWebsiteStatuses(ctx context.Context, websiteID int64, cursor string, num int64) ([]domain.Status, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, w.contextTimeout)
 	defer cancel()
 
-	return w.repo.QueryStatusesForWebsite(ctx, websiteID, cursor, num)
+	return w.repo.QueryStatusesByWebsiteID(ctx, websiteID, cursor, num)
 }

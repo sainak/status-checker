@@ -1,0 +1,1 @@
+ALTER TABLE website_statuses RENAME COLUMN time TO checked_at;

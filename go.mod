@@ -11,6 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
+	gopkg.in/guregu/null.v4 v4.0.0
 )
 
 require (

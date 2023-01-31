@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/reflectx"
 	_ "github.com/lib/pq"
 	"github.com/sainak/status-checker/core/config"
 	"github.com/sainak/status-checker/core/logger"
@@ -15,6 +16,7 @@ import (
 	_websiteStatusRepo "github.com/sainak/status-checker/websitestatus/repo/sqlite"
 	_websiteStatusService "github.com/sainak/status-checker/websitestatus/service"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -22,6 +24,7 @@ func Run() {
 	config.GetConfig()
 
 	db := sqlx.MustOpen("postgres", config.GetDBurl())
+	db.Mapper = reflectx.NewMapperFunc("json", strings.ToLower)
 	defer func(db *sqlx.DB) {
 		err := db.Close()
 		if err != nil {

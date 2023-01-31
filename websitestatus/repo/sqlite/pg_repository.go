@@ -63,21 +63,22 @@ func (s pgWebsiteStatusRepo) QueryWebsites(
 		return
 	}
 	if len(websites) == int(num) {
-		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt)
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
 	}
 	return
 }
 
-func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
+func (s pgWebsiteStatusRepo) QueryWebsitesStatus(
 	ctx context.Context,
 	cursor string,
 	num int64,
 	filters map[string]string,
-) (websites []domain.Website, nextCursor string, err error) {
-	query := `SELECT websites.id, websites.url, websites.added_at, website_statuses.up, website_statuses.time
+) (websites []domain.WebsiteStatus, nextCursor string, err error) {
+	query := `SELECT websites.id, websites.added_at, websites.url, 
+		website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at
 		FROM websites
 		LEFT JOIN website_statuses ON websites.id = website_statuses.website_id
-		AND website_statuses.time = (SELECT MAX(time) FROM website_statuses WHERE website_id = websites.id)
+		AND website_statuses.checked_at = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id)
 		WHERE added_at > $1 ORDER BY added_at LIMIT $2`
 
 	decodedCursor, err := repo.DecodeCursor(cursor)
@@ -86,16 +87,16 @@ func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
 		err = errors.ErrBadParamInput
 		return
 	}
-	stmt, err := s.DB.PrepareContext(ctx, query)
+	stmt, err := s.DB.PreparexContext(ctx, query)
 	if err != nil {
 		panic(err)
 	}
 
-	rows, err := stmt.QueryContext(ctx, decodedCursor, num)
+	rows, err := stmt.QueryxContext(ctx, decodedCursor, num)
 	if err != nil {
 		panic(err)
 	}
-	defer func(rows *sql.Rows) {
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			logger.Error(err)
@@ -103,12 +104,8 @@ func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
 	}(rows)
 
 	for rows.Next() {
-		website := domain.Website{}
-		var up sql.NullBool
-		var time sql.NullTime
-		err = rows.Scan(&website.ID, &website.URL, &website.AddedAt, &up, &time)
-		website.Status.Up = up.Bool
-		website.Status.Time = time.Time
+		website := domain.WebsiteStatus{}
+		err = rows.StructScan(&website)
 		if err != nil {
 			logger.Error(err)
 		}
@@ -120,7 +117,7 @@ func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
 		return
 	}
 	if len(websites) == int(num) {
-		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt)
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
 	}
 	return
 }
@@ -130,12 +127,12 @@ func (s pgWebsiteStatusRepo) InsertWebsite(
 	website *domain.Website,
 ) (err error) {
 	query := `INSERT INTO websites (id, url, added_at) VALUES (DEFAULT, $1, $2) RETURNING id`
-	stmt, err := s.DB.PrepareContext(ctx, query)
+	stmt, err := s.DB.PreparexContext(ctx, query)
 	if err != nil {
 		panic(err)
 		return
 	}
-	err = stmt.QueryRowContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
+	err = stmt.QueryRowxContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
 	if err != nil {
 		// check if the error is a duplicate key error
 		//if _errors.Is(err, sql.) {
@@ -148,24 +145,21 @@ func (s pgWebsiteStatusRepo) InsertWebsite(
 	return err
 }
 
-func (s pgWebsiteStatusRepo) QueryWebsiteWithStatusByID(
+func (s pgWebsiteStatusRepo) QueryWebsiteStatusByID(
 	ctx context.Context,
 	id int64,
-) (website domain.Website, err error) {
-	query := `SELECT websites.id, websites.url, websites.added_at, website_statuses.up, website_statuses.time
+) (website domain.WebsiteStatus, err error) {
+	query := `SELECT websites.id, websites.added_at, websites.url, 
+		website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at
 		FROM websites
 		LEFT JOIN website_statuses ON websites.id = website_statuses.website_id
-		AND website_statuses.time = (SELECT MAX(time) FROM website_statuses WHERE website_id = websites.id)
+		AND website_statuses.time = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id)
 		WHERE websites.id = $1`
-	stmt, err := s.DB.PrepareContext(ctx, query)
+	stmt, err := s.DB.PreparexContext(ctx, query)
 	if err != nil {
 		panic(err)
 	}
-	var up sql.NullBool
-	var time sql.NullTime
-	err = stmt.QueryRowContext(ctx, id).Scan(&website.ID, &website.URL, &website.AddedAt, &up, &time)
-	website.Status.Up = up.Bool
-	website.Status.Time = time.Time
+	err = stmt.QueryRowxContext(ctx, id).StructScan(&website)
 	if err != nil {
 		return
 	}
@@ -199,28 +193,28 @@ func (s pgWebsiteStatusRepo) DropWebsite(
 	return
 }
 
-func (s pgWebsiteStatusRepo) InsertWebsiteStatus(
+func (s pgWebsiteStatusRepo) InsertStatus(
 	ctx context.Context,
-	status *domain.WebsiteStatus,
+	status *domain.Status,
 ) (err error) {
-	query := `INSERT INTO website_statuses (id, website_id, up, time) VALUES (DEFAULT, $1, $2, $3) RETURNING id`
+	query := `INSERT INTO website_statuses (id, website_id, up, checked_at) VALUES (DEFAULT, $1, $2, $3) RETURNING id`
 	stmt, err := s.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return
 	}
-	err = stmt.QueryRowContext(ctx, status.WebsiteID, status.Up, status.Time).Scan(&status.ID)
+	err = stmt.QueryRowContext(ctx, status.WebsiteID, status.Up, status.CheckedAt).Scan(&status.ID)
 	return
 }
 
-func (s pgWebsiteStatusRepo) QueryStatusesForWebsite(
+func (s pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 	ctx context.Context,
 	websiteID int64,
 	cursor string,
 	num int64,
-) (statuses []domain.WebsiteStatus, nextCursor string, err error) {
-	query := `SELECT id, website_id, up, time 
+) (statuses []domain.Status, nextCursor string, err error) {
+	query := `SELECT id, website_id, up, checked_at 
 		FROM website_statuses 
-		WHERE website_id = $1 AND time > $2 ORDER BY time LIMIT $3`
+		WHERE website_id = $1 AND checked_at > $2 ORDER BY checked_at LIMIT $3`
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil && cursor != "" {
 		err = errors.ErrBadParamInput
@@ -245,7 +239,7 @@ func (s pgWebsiteStatusRepo) QueryStatusesForWebsite(
 		return
 	}
 	if len(statuses) == int(num) {
-		nextCursor = repo.EncodeCursor(statuses[len(statuses)-1].Time)
+		nextCursor = repo.EncodeCursor(statuses[len(statuses)-1].CheckedAt.ValueOrZero())
 	}
 	return
 }

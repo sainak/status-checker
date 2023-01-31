@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
+	"gopkg.in/guregu/null.v4/zero"
 	"net/http"
 	"time"
 )
@@ -41,8 +42,8 @@ func (h *HttpChecker) Check(ctx context.Context, name string) (status bool, err 
 	return
 }
 
-func (h *HttpChecker) CreateStatus(ctx context.Context, status *domain.WebsiteStatus) error {
-	return h.Repo.InsertWebsiteStatus(ctx, status)
+func (h *HttpChecker) CreateStatus(ctx context.Context, status *domain.Status) error {
+	return h.Repo.InsertStatus(ctx, status)
 }
 
 func CheckWebsiteStatus(ctx context.Context, checker domain.StatusChecker, website domain.Website) {
@@ -51,10 +52,10 @@ func CheckWebsiteStatus(ctx context.Context, checker domain.StatusChecker, websi
 		logger.Error(err)
 		return
 	}
-	websiteStatus := domain.WebsiteStatus{
+	websiteStatus := domain.Status{
 		WebsiteID: website.ID,
-		Up:        status,
-		Time:      time.Now(),
+		Up:        zero.NewBool(status, true),
+		CheckedAt: zero.NewTime(time.Now(), true),
 	}
 	err = checker.CreateStatus(ctx, &websiteStatus)
 	if err != nil {

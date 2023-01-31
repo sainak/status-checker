@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/sainak/status-checker/core/domain"
 	errors2 "github.com/sainak/status-checker/core/errors"
+	"gopkg.in/guregu/null.v4/zero"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,7 +39,7 @@ func (h *WebsiteStatusHandler) CreateWebsite(w http.ResponseWriter, r *http.Requ
 	}
 	website := &domain.Website{
 		URL:     data.URL,
-		AddedAt: time.Now(),
+		AddedAt: zero.NewTime(time.Now(), true),
 	}
 	err := h.Service.CreateWebsite(r.Context(), website)
 	if err != nil {
