@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"github.com/go-chi/render"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/render"
 )
 
 func Root(w http.ResponseWriter, r *http.Request) {

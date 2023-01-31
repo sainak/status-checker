@@ -2,9 +2,10 @@ package logger
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 var log *logrus.Logger

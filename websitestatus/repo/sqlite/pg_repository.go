@@ -3,7 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+
 	"github.com/jmoiron/sqlx"
+
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
 	"github.com/sainak/status-checker/core/myerrors"
@@ -134,8 +136,7 @@ func (s pgWebsiteStatusRepo) InsertWebsite(
 	}
 	err = stmt.QueryRowxContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
 	if err != nil {
-		panic(err)
-		return
+		logger.Error(err)
 	}
 	return err
 }

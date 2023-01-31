@@ -3,10 +3,11 @@ package cron
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
 	_websiteStatusService "github.com/sainak/status-checker/websitestatus/service"
-	"time"
 )
 
 const (

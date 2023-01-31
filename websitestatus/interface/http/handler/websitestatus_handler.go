@@ -2,13 +2,15 @@ package handler
 
 import (
 	"errors"
-	"github.com/go-chi/render"
-	"github.com/sainak/status-checker/core/domain"
-	errors2 "github.com/sainak/status-checker/core/myerrors"
-	"gopkg.in/guregu/null.v4/zero"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-chi/render"
+	"gopkg.in/guregu/null.v4/zero"
+
+	"github.com/sainak/status-checker/core/domain"
+	errors2 "github.com/sainak/status-checker/core/myerrors"
 )
 
 type WebsiteStatusHandler struct {

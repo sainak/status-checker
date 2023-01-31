@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/sainak/status-checker/core/logger"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
+
+	"github.com/sainak/status-checker/core/logger"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 const (

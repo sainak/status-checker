@@ -1,12 +1,17 @@
 package app
 
 import (
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/reflectx"
 	_ "github.com/lib/pq"
+
 	"github.com/sainak/status-checker/core/config"
 	"github.com/sainak/status-checker/core/logger"
 	"github.com/sainak/status-checker/helpers"
@@ -15,9 +20,6 @@ import (
 	_websiteStatusRouter "github.com/sainak/status-checker/websitestatus/interface/http/router"
 	_websiteStatusRepo "github.com/sainak/status-checker/websitestatus/repo/sqlite"
 	_websiteStatusService "github.com/sainak/status-checker/websitestatus/service"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func Run() {

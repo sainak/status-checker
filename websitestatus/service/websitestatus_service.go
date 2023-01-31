@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/sainak/status-checker/core/domain"
 	"time"
+
+	"github.com/sainak/status-checker/core/domain"
 )
 
 func NewWebsiteStatusService(repo domain.WebsiteStatusStorer, timeout time.Duration) domain.WebsiteStatusService {

@@ -2,10 +2,11 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/sainak/status-checker/core/logger"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/sainak/status-checker/core/logger"
 )
 
 func GetRegisteredRoutes(r *chi.Mux) string {

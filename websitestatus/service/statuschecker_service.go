@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
 	"gopkg.in/guregu/null.v4/zero"
-	"net/http"
-	"time"
 )
 
 type httpChecker struct {
