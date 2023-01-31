@@ -50,7 +50,7 @@ mainLoop:
 		var next = ""
 	queryLoop:
 		for {
-			websites, next, err := repo.QueryWebsitesWithStatus(ctx, next, 100, nil)
+			websites, next, err := repo.QueryWebsites(ctx, next, 100, nil)
 			if err != nil {
 
 			}

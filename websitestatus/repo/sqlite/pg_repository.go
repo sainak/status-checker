@@ -18,6 +18,56 @@ type pgWebsiteStatusRepo struct {
 	DB *sqlx.DB
 }
 
+func (s pgWebsiteStatusRepo) QueryWebsites(
+	ctx context.Context,
+	cursor string,
+	num int64,
+	filters map[string]string,
+) (websites []domain.Website, nextCursor string, err error) {
+	query := `SELECT websites.id, websites.url, websites.added_at
+		FROM websites
+		WHERE added_at > $1 ORDER BY added_at LIMIT $2`
+
+	decodedCursor, err := repo.DecodeCursor(cursor)
+	if err != nil {
+		logger.Error(err)
+		err = errors.ErrBadParamInput
+		return
+	}
+	stmt, err := s.DB.PrepareContext(ctx, query)
+	if err != nil {
+		panic(err)
+	}
+	rows, err := stmt.QueryContext(ctx, decodedCursor, num)
+	if err != nil {
+		panic(err)
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(rows)
+
+	for rows.Next() {
+		website := domain.Website{}
+		err = rows.Scan(&website.ID, &website.URL, &website.AddedAt)
+		if err != nil {
+			logger.Error(err)
+		}
+		websites = append(websites, website)
+	}
+
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	if len(websites) == int(num) {
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt)
+	}
+	return
+}
+
 func (s pgWebsiteStatusRepo) QueryWebsitesWithStatus(
 	ctx context.Context,
 	cursor string,

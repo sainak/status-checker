@@ -25,6 +25,7 @@ type WebsiteStatus struct {
 }
 
 type WebsiteStatusStorer interface {
+	QueryWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]Website, string, error)
 	QueryWebsitesWithStatus(ctx context.Context, cursor string, num int64, filters map[string]string) ([]Website, string, error)
 	InsertWebsite(ctx context.Context, website *Website) error
 	QueryWebsiteWithStatusByID(ctx context.Context, id int64) (Website, error)
