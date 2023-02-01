@@ -24,7 +24,13 @@ func ErrBadRequest(s string) error {
 }
 
 type WebsiteStatusHandler struct {
-	Service domain.WebsiteStatusService
+	service domain.WebsiteStatusService
+}
+
+func NewWebsiteStatusHandler(service domain.WebsiteStatusService) *WebsiteStatusHandler {
+	return &WebsiteStatusHandler{
+		service: service,
+	}
 }
 
 type WebsiteRequest struct {
@@ -39,7 +45,6 @@ func (w WebsiteRequest) Bind(r *http.Request) error {
 }
 
 func (h *WebsiteStatusHandler) CreateWebsite(w http.ResponseWriter, r *http.Request) {
-
 	data := &WebsiteRequest{}
 	if err := render.Bind(r, data); err != nil {
 		logger.Error(err)
@@ -53,7 +58,7 @@ func (h *WebsiteStatusHandler) CreateWebsite(w http.ResponseWriter, r *http.Requ
 		URL:     data.URL,
 		AddedAt: zero.NewTime(time.Now(), true),
 	}
-	err := h.Service.CreateWebsite(r.Context(), website)
+	err := h.service.CreateWebsite(r.Context(), website)
 	if err != nil {
 		api.RespondForError(w, r, err)
 		return
@@ -72,7 +77,7 @@ func (h *WebsiteStatusHandler) GetAllSites(w http.ResponseWriter, r *http.Reques
 		}
 		return ret
 	}()
-	websites, nextCursor, err := h.Service.ListWebsitesStatus(r.Context(), cursor, int64(limit), nil)
+	websites, nextCursor, err := h.service.ListWebsitesStatus(r.Context(), cursor, int64(limit), nil)
 	if err != nil {
 		api.RespondForError(w, r, err)
 		return
