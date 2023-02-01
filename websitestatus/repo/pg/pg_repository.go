@@ -51,7 +51,7 @@ func (r pgWebsiteStatusRepo) QueryWebsites(
 	rows, err := stmt.QueryxContext(ctx, decodedCursor, num)
 	if err != nil {
 		logger.Error(err)
-		return []domain.Website{}, "", myerrors.ErrInternalServerError
+		return []domain.Website{}, "", myerrors.ParseDBError(err)
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -66,7 +66,7 @@ func (r pgWebsiteStatusRepo) QueryWebsites(
 		err = rows.Scan(&website.ID, &website.URL, &website.AddedAt)
 		if err != nil {
 			logger.Error(err)
-			return []domain.Website{}, "", myerrors.ErrInternalServerError
+			return []domain.Website{}, "", myerrors.ParseDBError(err)
 		}
 		websites = append(websites, website)
 	}
@@ -99,7 +99,7 @@ func (r pgWebsiteStatusRepo) QueryWebsitesStatus(
 	rows, err := stmt.QueryxContext(ctx, decodedCursor, num)
 	if err != nil {
 		logger.Error(err)
-		return []domain.WebsiteStatus{}, "", myerrors.ErrInternalServerError
+		return []domain.WebsiteStatus{}, "", myerrors.ParseDBError(err)
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -114,7 +114,7 @@ func (r pgWebsiteStatusRepo) QueryWebsitesStatus(
 		err = rows.StructScan(&website)
 		if err != nil {
 			logger.Error(err)
-			return []domain.WebsiteStatus{}, "", myerrors.ErrInternalServerError
+			return []domain.WebsiteStatus{}, "", myerrors.ParseDBError(err)
 		}
 		websites = append(websites, website)
 	}
@@ -139,7 +139,7 @@ func (r pgWebsiteStatusRepo) InsertWebsite(
 	err = stmt.QueryRowxContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
 	if err != nil {
 		logger.Error(err)
-		return myerrors.ErrInternalServerError
+		return myerrors.ParseDBError(err)
 	}
 	return nil
 }
@@ -159,7 +159,7 @@ func (r pgWebsiteStatusRepo) QueryWebsiteStatusByID(
 	err = stmt.QueryRowxContext(ctx, id).StructScan(&website)
 	if err != nil {
 		logger.Error(err)
-		return domain.WebsiteStatus{}, myerrors.ErrInternalServerError
+		return domain.WebsiteStatus{}, myerrors.ParseDBError(err)
 	}
 	return website, nil
 }
@@ -178,7 +178,7 @@ func (r pgWebsiteStatusRepo) DropWebsite(
 	_, err = stmt.ExecContext(ctx, id)
 	if err != nil {
 		logger.Error(err)
-		return myerrors.ErrInternalServerError
+		return myerrors.ParseDBError(err)
 	}
 	return nil
 }
@@ -197,7 +197,7 @@ func (r pgWebsiteStatusRepo) InsertStatus(
 	err = stmt.QueryRowContext(ctx, status.WebsiteID, status.Up, status.CheckedAt).Scan(&status.ID)
 	if err != nil {
 		logger.Error(err)
-		return myerrors.ErrInternalServerError
+		return myerrors.ParseDBError(err)
 	}
 	return nil
 }
@@ -224,7 +224,7 @@ func (r pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 	rows, err := stmt.QueryxContext(ctx, websiteID, decodedCursor, num)
 	if err != nil {
 		logger.Error(err)
-		return []domain.Status{}, "", myerrors.ErrInternalServerError
+		return []domain.Status{}, "", myerrors.ParseDBError(err)
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -237,7 +237,7 @@ func (r pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 	err = rows.StructScan(&statuses)
 	if err != nil {
 		logger.Error(err)
-		return []domain.Status{}, "", myerrors.ErrInternalServerError
+		return []domain.Status{}, "", myerrors.ParseDBError(err)
 	}
 	var nextCursor string
 	if len(statuses) == int(num) {
