@@ -33,18 +33,15 @@ type WebsiteStatusStorer interface {
 	QueryWebsitesStatus(ctx context.Context, cursor string, num int64, filters map[string]string) ([]WebsiteStatus, string, error)
 	QueryWebsiteStatusByID(ctx context.Context, id int64) (WebsiteStatus, error)
 	InsertWebsite(ctx context.Context, website *Website) error
-	UpdateIntoWebsite(ctx context.Context, id int64, website *Website) error
 	DropWebsite(ctx context.Context, id int64) error
 	InsertStatus(ctx context.Context, status *Status) error
 	QueryStatusesByWebsiteID(ctx context.Context, websiteID int64, cursor string, num int64) ([]Status, string, error)
 }
 
 type WebsiteStatusService interface {
-	ListWebsites(ctx context.Context, cursor string, num int64, filters map[string]string) ([]WebsiteStatus, string, error)
+	ListWebsitesStatus(ctx context.Context, cursor string, num int64, filters map[string]string) ([]WebsiteStatus, string, error)
+	GetWebsiteStatusByID(ctx context.Context, id int64) (WebsiteStatus, error)
 	CreateWebsite(ctx context.Context, website *Website) error
-	GetWebsiteByID(ctx context.Context, id int64) (WebsiteStatus, error)
-	UpdateWebsite(ctx context.Context, id int64, website *Website) error
 	DeleteWebsite(ctx context.Context, id int64) error
-	CreateWebsiteStatus(ctx context.Context, status *Status) error
 	ListWebsiteStatuses(ctx context.Context, websiteID int64, cursor string, num int64) ([]Status, string, error)
 }

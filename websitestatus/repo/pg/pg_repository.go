@@ -162,20 +162,6 @@ func (s pgWebsiteStatusRepo) QueryWebsiteStatusByID(
 	return
 }
 
-func (s pgWebsiteStatusRepo) UpdateIntoWebsite(
-	ctx context.Context,
-	id int64,
-	website *domain.Website,
-) (err error) {
-	query := `UPDATE websites SET url = $2 WHERE id = $1`
-	stmt, err := s.DB.PrepareContext(ctx, query)
-	if err != nil {
-		return
-	}
-	_, err = stmt.ExecContext(ctx, id, website.URL)
-	return
-}
-
 func (s pgWebsiteStatusRepo) DropWebsite(
 	ctx context.Context,
 	id int64,

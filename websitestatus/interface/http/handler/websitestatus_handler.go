@@ -62,7 +62,7 @@ func (h *WebsiteStatusHandler) GetAllSites(w http.ResponseWriter, r *http.Reques
 		}
 		return ret
 	}()
-	websites, nextCursor, err := h.Service.ListWebsites(r.Context(), cursor, int64(limit), nil)
+	websites, nextCursor, err := h.Service.ListWebsitesStatus(r.Context(), cursor, int64(limit), nil)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, errors2.ResponseError{Message: err.Error()})
