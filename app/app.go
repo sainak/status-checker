@@ -18,7 +18,7 @@ import (
 	_rootRouter "github.com/sainak/status-checker/root/interface/http/router"
 	"github.com/sainak/status-checker/websitestatus/interface/cron"
 	_websiteStatusRouter "github.com/sainak/status-checker/websitestatus/interface/http/router"
-	_websiteStatusRepo "github.com/sainak/status-checker/websitestatus/repo/sqlite"
+	_websiteStatusRepo "github.com/sainak/status-checker/websitestatus/repo/pg"
 	_websiteStatusService "github.com/sainak/status-checker/websitestatus/service"
 )
 
