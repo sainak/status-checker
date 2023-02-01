@@ -2,7 +2,6 @@ package pg
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 
@@ -10,6 +9,16 @@ import (
 	"github.com/sainak/status-checker/core/logger"
 	"github.com/sainak/status-checker/core/myerrors"
 	"github.com/sainak/status-checker/helpers/repo"
+)
+
+const (
+	queryWebsitesQuery          = `SELECT websites.id, websites.url, websites.added_at FROM websites WHERE added_at > $1 ORDER BY added_at LIMIT $2`
+	queryWebsiteStatusQuery     = `SELECT websites.id, websites.added_at, websites.url, website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at FROM websites LEFT JOIN website_statuses ON websites.id = website_statuses.website_id AND website_statuses.checked_at = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id) WHERE added_at > $1 ORDER BY added_at LIMIT $2`
+	insertWebsiteQuery          = `INSERT INTO websites (url, added_at) VALUES ($1, $2) RETURNING id`
+	queryWebsiteStatusByIDQuery = `SELECT websites.id, websites.added_at, websites.url,  website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at FROM websites LEFT JOIN website_statuses ON websites.id = website_statuses.website_id AND website_statuses.time = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id) WHERE websites.id = $1`
+	dropWebsiteQuery            = `DELETE FROM websites WHERE id = $1`
+	insertStatusQuery           = `INSERT INTO website_statuses (id, website_id, up, checked_at) VALUES (DEFAULT, $1, $2, $3) RETURNING id`
+	queryStatusQuery            = `SELECT id, website_id, up, checked_at FROM website_statuses  WHERE website_id = $1 AND checked_at > $2 ORDER BY checked_at LIMIT $3`
 )
 
 func NewWebsiteStatusRepo(db *sqlx.DB) domain.WebsiteStatusStorer {
@@ -20,83 +29,29 @@ type pgWebsiteStatusRepo struct {
 	DB *sqlx.DB
 }
 
-func (s pgWebsiteStatusRepo) QueryWebsites(
+func (r pgWebsiteStatusRepo) QueryWebsites(
 	ctx context.Context,
 	cursor string,
 	num int64,
 	filters map[string]string,
-) (websites []domain.Website, nextCursor string, err error) {
-	query := `SELECT websites.id, websites.url, websites.added_at
-		FROM websites
-		WHERE added_at > $1 ORDER BY added_at LIMIT $2`
+) ([]domain.Website, string, error) {
 
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil {
 		logger.Error(err)
-		err = myerrors.ErrBadParamInput
-		return
-	}
-	stmt, err := s.DB.PrepareContext(ctx, query)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := stmt.QueryContext(ctx, decodedCursor, num)
-	if err != nil {
-		panic(err)
-	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			logger.Error(err)
-		}
-	}(rows)
-
-	for rows.Next() {
-		website := domain.Website{}
-		err = rows.Scan(&website.ID, &website.URL, &website.AddedAt)
-		if err != nil {
-			logger.Error(err)
-		}
-		websites = append(websites, website)
+		return []domain.Website{}, "", myerrors.ErrBadCursor
 	}
 
+	stmt, err := r.DB.PreparexContext(ctx, queryWebsitesQuery)
 	if err != nil {
 		logger.Error(err)
-		return
-	}
-	if len(websites) == int(num) {
-		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
-	}
-	return
-}
-
-func (s pgWebsiteStatusRepo) QueryWebsitesStatus(
-	ctx context.Context,
-	cursor string,
-	num int64,
-	filters map[string]string,
-) (websites []domain.WebsiteStatus, nextCursor string, err error) {
-	query := `SELECT websites.id, websites.added_at, websites.url, 
-		website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at
-		FROM websites
-		LEFT JOIN website_statuses ON websites.id = website_statuses.website_id
-		AND website_statuses.checked_at = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id)
-		WHERE added_at > $1 ORDER BY added_at LIMIT $2`
-
-	decodedCursor, err := repo.DecodeCursor(cursor)
-	if err != nil {
-		logger.Error(err)
-		err = myerrors.ErrBadParamInput
-		return
-	}
-	stmt, err := s.DB.PreparexContext(ctx, query)
-	if err != nil {
-		panic(err)
+		return []domain.Website{}, "", myerrors.ErrInternalServerError
 	}
 
 	rows, err := stmt.QueryxContext(ctx, decodedCursor, num)
 	if err != nil {
-		panic(err)
+		logger.Error(err)
+		return []domain.Website{}, "", myerrors.ErrInternalServerError
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -105,123 +60,188 @@ func (s pgWebsiteStatusRepo) QueryWebsitesStatus(
 		}
 	}(rows)
 
+	var websites []domain.Website
+	for rows.Next() {
+		website := domain.Website{}
+		err = rows.Scan(&website.ID, &website.URL, &website.AddedAt)
+		if err != nil {
+			logger.Error(err)
+			return []domain.Website{}, "", myerrors.ErrInternalServerError
+		}
+		websites = append(websites, website)
+	}
+	var nextCursor string
+	if len(websites) == int(num) {
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
+	}
+	return websites, nextCursor, nil
+}
+
+func (r pgWebsiteStatusRepo) QueryWebsitesStatus(
+	ctx context.Context,
+	cursor string,
+	num int64,
+	filters map[string]string,
+) ([]domain.WebsiteStatus, string, error) {
+
+	decodedCursor, err := repo.DecodeCursor(cursor)
+	if err != nil {
+		logger.Error(err)
+		return []domain.WebsiteStatus{}, "", myerrors.ErrBadCursor
+	}
+
+	stmt, err := r.DB.PreparexContext(ctx, queryWebsiteStatusQuery)
+	if err != nil {
+		logger.Error(err)
+		return []domain.WebsiteStatus{}, "", myerrors.ErrInternalServerError
+	}
+
+	rows, err := stmt.QueryxContext(ctx, decodedCursor, num)
+	if err != nil {
+		logger.Error(err)
+		return []domain.WebsiteStatus{}, "", myerrors.ErrInternalServerError
+	}
+	defer func(rows *sqlx.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(rows)
+
+	var websites []domain.WebsiteStatus
 	for rows.Next() {
 		website := domain.WebsiteStatus{}
 		err = rows.StructScan(&website)
 		if err != nil {
 			logger.Error(err)
+			return []domain.WebsiteStatus{}, "", myerrors.ErrInternalServerError
 		}
 		websites = append(websites, website)
 	}
-
-	if err != nil {
-		logger.Error(err)
-		return
-	}
+	var nextCursor string
 	if len(websites) == int(num) {
 		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
 	}
-	return
+	return websites, nextCursor, nil
 }
 
-func (s pgWebsiteStatusRepo) InsertWebsite(
+func (r pgWebsiteStatusRepo) InsertWebsite(
 	ctx context.Context,
 	website *domain.Website,
-) (err error) {
-	query := `INSERT INTO websites (id, url, added_at) VALUES (DEFAULT, $1, $2) RETURNING id`
-	stmt, err := s.DB.PreparexContext(ctx, query)
+) error {
+
+	stmt, err := r.DB.PreparexContext(ctx, insertWebsiteQuery)
 	if err != nil {
-		panic(err)
-		return
+		logger.Error(err)
+		return myerrors.ErrInternalServerError
 	}
+
 	err = stmt.QueryRowxContext(ctx, website.URL, website.AddedAt).Scan(&website.ID)
 	if err != nil {
 		logger.Error(err)
+		return myerrors.ErrInternalServerError
 	}
-	return err
+	return nil
 }
 
-func (s pgWebsiteStatusRepo) QueryWebsiteStatusByID(
+func (r pgWebsiteStatusRepo) QueryWebsiteStatusByID(
 	ctx context.Context,
 	id int64,
-) (website domain.WebsiteStatus, err error) {
-	query := `SELECT websites.id, websites.added_at, websites.url, 
-		website_statuses.id AS status_id, website_statuses.up, website_statuses.checked_at
-		FROM websites
-		LEFT JOIN website_statuses ON websites.id = website_statuses.website_id
-		AND website_statuses.time = (SELECT MAX(checked_at) FROM website_statuses WHERE website_id = websites.id)
-		WHERE websites.id = $1`
-	stmt, err := s.DB.PreparexContext(ctx, query)
+) (domain.WebsiteStatus, error) {
+
+	stmt, err := r.DB.PreparexContext(ctx, queryWebsiteStatusByIDQuery)
 	if err != nil {
-		panic(err)
+		logger.Error(err)
+		return domain.WebsiteStatus{}, myerrors.ErrInternalServerError
 	}
+
+	var website domain.WebsiteStatus
 	err = stmt.QueryRowxContext(ctx, id).StructScan(&website)
 	if err != nil {
-		return
+		logger.Error(err)
+		return domain.WebsiteStatus{}, myerrors.ErrInternalServerError
 	}
-	return
+	return website, nil
 }
 
-func (s pgWebsiteStatusRepo) DropWebsite(
+func (r pgWebsiteStatusRepo) DropWebsite(
 	ctx context.Context,
 	id int64,
-) (err error) {
-	query := `DELETE FROM websites WHERE id = $1`
-	stmt, err := s.DB.PrepareContext(ctx, query)
+) error {
+
+	stmt, err := r.DB.PrepareContext(ctx, dropWebsiteQuery)
 	if err != nil {
-		return
+		logger.Error(err)
+		return myerrors.ErrInternalServerError
 	}
+
 	_, err = stmt.ExecContext(ctx, id)
-	return
+	if err != nil {
+		logger.Error(err)
+		return myerrors.ErrInternalServerError
+	}
+	return nil
 }
 
-func (s pgWebsiteStatusRepo) InsertStatus(
+func (r pgWebsiteStatusRepo) InsertStatus(
 	ctx context.Context,
 	status *domain.Status,
-) (err error) {
-	query := `INSERT INTO website_statuses (id, website_id, up, checked_at) VALUES (DEFAULT, $1, $2, $3) RETURNING id`
-	stmt, err := s.DB.PrepareContext(ctx, query)
+) error {
+
+	stmt, err := r.DB.PrepareContext(ctx, insertStatusQuery)
 	if err != nil {
-		return
+		logger.Error(err)
+		return myerrors.ErrInternalServerError
 	}
+
 	err = stmt.QueryRowContext(ctx, status.WebsiteID, status.Up, status.CheckedAt).Scan(&status.ID)
-	return
+	if err != nil {
+		logger.Error(err)
+		return myerrors.ErrInternalServerError
+	}
+	return nil
 }
 
-func (s pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
+func (r pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 	ctx context.Context,
 	websiteID int64,
 	cursor string,
 	num int64,
-) (statuses []domain.Status, nextCursor string, err error) {
-	query := `SELECT id, website_id, up, checked_at 
-		FROM website_statuses 
-		WHERE website_id = $1 AND checked_at > $2 ORDER BY checked_at LIMIT $3`
+) ([]domain.Status, string, error) {
+
 	decodedCursor, err := repo.DecodeCursor(cursor)
 	if err != nil && cursor != "" {
-		err = myerrors.ErrBadParamInput
-		return
+		logger.Error(err)
+		return []domain.Status{}, "", myerrors.ErrBadCursor
 	}
-	stmt, err := s.DB.PrepareContext(ctx, query)
+
+	stmt, err := r.DB.PreparexContext(ctx, queryStatusQuery)
 	if err != nil {
-		return
+		logger.Error(err)
+		return []domain.Status{}, "", myerrors.ErrInternalServerError
 	}
-	rows, err := stmt.QueryContext(ctx, websiteID, decodedCursor, num)
+
+	rows, err := stmt.QueryxContext(ctx, websiteID, decodedCursor, num)
 	if err != nil {
-		return
+		logger.Error(err)
+		return []domain.Status{}, "", myerrors.ErrInternalServerError
 	}
-	defer func(rows *sql.Rows) {
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
-			panic(err)
+			logger.Error(err)
 		}
 	}(rows)
-	err = rows.Scan(&statuses)
+
+	var statuses []domain.Status
+	err = rows.StructScan(&statuses)
 	if err != nil {
-		return
+		logger.Error(err)
+		return []domain.Status{}, "", myerrors.ErrInternalServerError
 	}
+	var nextCursor string
 	if len(statuses) == int(num) {
 		nextCursor = repo.EncodeCursor(statuses[len(statuses)-1].CheckedAt.ValueOrZero())
 	}
-	return
+	return statuses, nextCursor, nil
 }

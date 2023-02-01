@@ -14,6 +14,8 @@ var (
 	ErrNotFound = errors.New("your requested Item is not found")
 	// ErrConflict will throw if the current action already exists
 	ErrConflict = errors.New("your Item already exist")
-	// ErrBadParamInput will throw if the given request-body or params is not valid
-	ErrBadParamInput = errors.New("given Param is not valid")
+	// ErrBadInputParam will throw if the given request-body or params is not valid
+	ErrBadInputParam = errors.New("given Param is not valid")
+	// ErrBadCursor will throw if the passed cursor is invalid
+	ErrBadCursor = errors.New("given cursor is invalid")
 )
