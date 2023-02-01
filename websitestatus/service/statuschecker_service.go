@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"gopkg.in/guregu/null.v4/zero"
+
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
-	"gopkg.in/guregu/null.v4/zero"
 )
 
 type httpChecker struct {
@@ -16,7 +17,7 @@ type httpChecker struct {
 	repo domain.WebsiteStatusStorer
 }
 
-func NewHttpChecker(r domain.WebsiteStatusStorer) domain.StatusChecker {
+func NewHttpChecker(r domain.WebsiteStatusStorer) domain.WebsiteStatusChecker {
 	return &httpChecker{
 		repo: r,
 	}
@@ -54,7 +55,7 @@ func (h *httpChecker) CreateStatus(ctx context.Context, status *domain.Status) e
 	return h.repo.InsertStatus(ctx, status)
 }
 
-func CheckWebsiteStatus(ctx context.Context, checker domain.StatusChecker, website domain.Website) {
+func CheckWebsiteStatus(ctx context.Context, checker domain.WebsiteStatusChecker, website domain.Website) {
 	status, err := checker.Check(ctx, website.URL)
 	if err != nil {
 		logger.Error(err)

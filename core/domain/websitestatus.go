@@ -45,3 +45,8 @@ type WebsiteStatusService interface {
 	DeleteWebsite(ctx context.Context, id int64) error
 	ListWebsiteStatuses(ctx context.Context, websiteID int64, cursor string, num int64) ([]Status, string, error)
 }
+
+type WebsiteStatusChecker interface {
+	Check(ctx context.Context, name string) (status bool, err error)
+	CreateStatus(ctx context.Context, status *Status) error
+}
