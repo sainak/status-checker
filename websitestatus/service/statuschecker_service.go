@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/guregu/null.v4/zero"
-
 	"github.com/sainak/status-checker/core/domain"
 	"github.com/sainak/status-checker/core/logger"
 )
@@ -25,7 +23,7 @@ func NewHttpChecker(r domain.WebsiteStatusStorer) domain.WebsiteStatusChecker {
 }
 
 func (h *httpChecker) Check(ctx context.Context, name string) (status bool, err error) {
-	logger.Info("checking website: ", name)
+	//logger.Info("checking website: ", name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+name, nil)
 	if err != nil {
 		logger.Error(err)
@@ -63,8 +61,8 @@ func CheckWebsiteStatus(ctx context.Context, checker domain.WebsiteStatusChecker
 	}
 	websiteStatus := domain.Status{
 		WebsiteID: website.ID,
-		Up:        zero.NewBool(status, true),
-		CheckedAt: zero.NewTime(time.Now(), true),
+		Up:        status,
+		CheckedAt: time.Now(),
 	}
 	err = checker.CreateStatus(ctx, &websiteStatus)
 	if err != nil {

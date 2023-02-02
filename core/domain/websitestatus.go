@@ -2,30 +2,31 @@ package domain
 
 import (
 	"context"
+	"time"
 
-	"gopkg.in/guregu/null.v4/zero"
+	"gopkg.in/guregu/null.v4"
 )
 
 type Website struct {
 	ID      int64     `json:"id"`
 	URL     string    `json:"url"`
-	AddedAt zero.Time `json:"added_at"`
+	AddedAt time.Time `json:"added_at"`
 }
 
 type Status struct {
 	ID        int64     `json:"id"`
-	Up        zero.Bool `json:"up"`
-	CheckedAt zero.Time `json:"checked_at"`
+	Up        bool      `json:"up"`
+	CheckedAt time.Time `json:"checked_at"`
 	WebsiteID int64     `json:"-"`
 }
 
 type WebsiteStatus struct {
 	ID        int64     `json:"id"`
 	URL       string    `json:"url"`
-	AddedAt   zero.Time `json:"added_at"`
-	StatusID  int64     `json:"status_id"`
-	Up        zero.Bool `json:"up"`
-	CheckedAt zero.Time `json:"checked_at"`
+	AddedAt   time.Time `json:"added_at"`
+	StatusID  null.Int  `json:"status_id"`
+	Up        null.Bool `json:"up"`
+	CheckedAt null.Time `json:"checked_at"`
 }
 
 type WebsiteStatusStorer interface {
