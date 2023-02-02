@@ -12,7 +12,7 @@ import (
 
 const (
 	NumWorkers    = 4
-	SleepDuration = 30 * time.Second
+	SleepDuration = 60 * time.Second
 )
 
 func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusStorer, broker <-chan domain.Website) {
@@ -39,7 +39,7 @@ func SpawnWorkers(ctx context.Context, repo domain.WebsiteStatusStorer, broker <
 
 func RunChecker(repo domain.WebsiteStatusStorer) {
 	logger.Info("starting checker cron job")
-	broker := make(chan domain.Website, NumWorkers)
+	broker := make(chan domain.Website, 100)
 	defer close(broker)
 	ctx := context.Background()
 
