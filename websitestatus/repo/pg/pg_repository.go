@@ -72,7 +72,7 @@ func (r pgWebsiteStatusRepo) QueryWebsites(
 	}
 	var nextCursor string
 	if len(websites) == int(num) {
-		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt)
 	}
 	return websites, nextCursor, nil
 }
@@ -120,7 +120,7 @@ func (r pgWebsiteStatusRepo) QueryWebsitesStatus(
 	}
 	var nextCursor string
 	if len(websites) == int(num) {
-		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt.ValueOrZero())
+		nextCursor = repo.EncodeCursor(websites[len(websites)-1].AddedAt)
 	}
 	return websites, nextCursor, nil
 }
@@ -241,7 +241,7 @@ func (r pgWebsiteStatusRepo) QueryStatusesByWebsiteID(
 	}
 	var nextCursor string
 	if len(statuses) == int(num) {
-		nextCursor = repo.EncodeCursor(statuses[len(statuses)-1].CheckedAt.ValueOrZero())
+		nextCursor = repo.EncodeCursor(statuses[len(statuses)-1].CheckedAt)
 	}
 	return statuses, nextCursor, nil
 }
