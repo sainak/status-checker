@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,12 +9,28 @@ import (
 	"github.com/go-chi/render"
 	"gopkg.in/guregu/null.v4/zero"
 
+	"github.com/sainak/status-checker/api"
 	"github.com/sainak/status-checker/core/domain"
-	errors2 "github.com/sainak/status-checker/core/myerrors"
+	"github.com/sainak/status-checker/core/logger"
+	"github.com/sainak/status-checker/core/myerrors"
 )
 
+func ErrBadRequest(s string) error {
+	return &myerrors.Error{
+		StatusCode: http.StatusBadRequest,
+		Status:     "bad_request",
+		Message:    "invalid request: " + s,
+	}
+}
+
 type WebsiteStatusHandler struct {
-	Service domain.WebsiteStatusService
+	service domain.WebsiteStatusService
+}
+
+func NewWebsiteStatusHandler(service domain.WebsiteStatusService) *WebsiteStatusHandler {
+	return &WebsiteStatusHandler{
+		service: service,
+	}
 }
 
 type WebsiteRequest struct {
@@ -23,29 +39,28 @@ type WebsiteRequest struct {
 
 func (w WebsiteRequest) Bind(r *http.Request) error {
 	if w.URL == "" {
-		return ErrInvalidRequest("missing url")
+		return ErrBadRequest("url is required")
 	}
 	return nil
 }
 
-func ErrInvalidRequest(s string) error {
-	return errors.New("invalid request: " + s)
-}
-
 func (h *WebsiteStatusHandler) CreateWebsite(w http.ResponseWriter, r *http.Request) {
-
 	data := &WebsiteRequest{}
 	if err := render.Bind(r, data); err != nil {
-		render.JSON(w, r, errors2.ResponseError{Message: err.Error()})
+		logger.Error(err)
+		if err == io.EOF {
+			err = ErrBadRequest("empty request body")
+		}
+		api.RespondForError(w, r, err)
 		return
 	}
 	website := &domain.Website{
 		URL:     data.URL,
 		AddedAt: zero.NewTime(time.Now(), true),
 	}
-	err := h.Service.CreateWebsite(r.Context(), website)
+	err := h.service.CreateWebsite(r.Context(), website)
 	if err != nil {
-		render.JSON(w, r, errors2.ResponseError{Message: err.Error()})
+		api.RespondForError(w, r, err)
 		return
 	}
 	render.Status(r, http.StatusCreated)
@@ -62,10 +77,9 @@ func (h *WebsiteStatusHandler) GetAllSites(w http.ResponseWriter, r *http.Reques
 		}
 		return ret
 	}()
-	websites, nextCursor, err := h.Service.ListWebsitesStatus(r.Context(), cursor, int64(limit), nil)
+	websites, nextCursor, err := h.service.ListWebsitesStatus(r.Context(), cursor, int64(limit), nil)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, errors2.ResponseError{Message: err.Error()})
+		api.RespondForError(w, r, err)
 		return
 	}
 	if nextCursor != "" {
